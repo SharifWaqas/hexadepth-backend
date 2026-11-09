@@ -10,10 +10,12 @@ Run:  uvicorn server:app --reload     then open http://localhost:8000
 from __future__ import annotations
 
 import base64
+import importlib.util
 import json
 import os
 import random
 import time
+from functools import lru_cache
 from pathlib import Path
 
 import cv2
@@ -79,7 +81,28 @@ def real_detector():
         _real_detector = dets.resolve(dets.REAL_SAMPLE_PREFERENCE, params)
     return _real_detector
 
-app = FastAPI(title="HexaDepth", version="1.0")
+@lru_cache(maxsize=4)
+def _load_sonar_detector(path: str, modified_ns: int):
+    """Load once per checkpoint version (including when training replaces the file)."""
+    return dets.SonarYoloDetector(
+        params_for("real", meters_per_pixel=METERS_PER_PIXEL), weights=Path(path)
+    )
+
+
+def active_sonar_detector():
+    """Return (trained detector, note), or (None, reason) without inventing AI results."""
+    checkpoint = dets.find_sonar_yolo()
+    if checkpoint is None:
+        return None, "HexaDepth YOLO checkpoint is not installed locally."
+    try:
+        return _load_sonar_detector(
+            str(checkpoint.resolve()), checkpoint.stat().st_mtime_ns
+        ), None
+    except (dets.ModelUnavailable, RuntimeError, OSError, ValueError) as exc:
+        return None, f"HexaDepth YOLO unavailable: {type(exc).__name__}: {exc}"
+
+
+app = FastAPI(title="HexaDepth", version="1.1")
 
 
 # ---------------------------------------------------------------- helpers
@@ -154,6 +177,25 @@ def detection_dict(det: pk.Detection) -> dict:
 
 
 # ---------------------------------------------------------------- API
+@app.get("/api/model/status")
+def sonar_model_status():
+    """Report model installation separately from detection results."""
+    checkpoint = dets.find_sonar_yolo()
+    return dict(
+        installed=checkpoint is not None,
+        runtime_installed=importlib.util.find_spec("ultralytics") is not None,
+        loaded=_load_sonar_detector.cache_info().currsize > 0,
+        model="HexaDepth YOLO11n (DRISHTI)",
+        checkpoint_name=dets.SONAR_WEIGHTS,
+        classes=[dict(id=20+i, name=dets.class_name(20+i, "Unknown"))
+                 for i in range(4)],
+        source_dataset="rehan9599/drishti-sss",
+        validation_note=("v2 measured 70.5% test precision and 56.4% test recall "
+                         "within the DRISHTI dataset; no independent validation. "
+                         "Ghost-net PNG examples were excluded from v2 training."),
+    )
+
+
 @app.get("/api/samples")
 def list_samples():
     synthetic = [
@@ -196,7 +238,9 @@ def results():
 
 @app.post("/api/analyze")
 async def analyze(sample: str | None = Form(None), file: UploadFile | None = File(None),
-                  profile: str | None = Form(None)):
+                  profile: str | None = Form(None), detector_mode: str = Form("auto")):
+    if detector_mode not in ("auto", "sonar_yolo", "classical"):
+        raise HTTPException(400, "detector_mode must be auto, sonar_yolo, or classical")
     if profile is not None and profile not in PROFILES:
         raise HTTPException(400, f"Unknown profile '{profile}'")
     if file is not None and file.filename:
@@ -217,11 +261,21 @@ async def analyze(sample: str | None = Form(None), file: UploadFile | None = Fil
     if img is None:
         raise HTTPException(400, "Could not read that image file")
 
-    use_trained = sample is not None and profile == "real" and (file is None or not file.filename)
-    if use_trained:
-        detector, note = real_detector()
+    if detector_mode == "classical":
+        detector = dets.ClassicalDetector(params_for(profile, meters_per_pixel=METERS_PER_PIXEL))
+        note = "Classical OpenCV detector explicitly selected."
     else:
-        detector, note = dets.ClassicalDetector(params_for(profile, meters_per_pixel=METERS_PER_PIXEL)), None
+        detector, note = active_sonar_detector()
+        if detector is None and detector_mode == "sonar_yolo":
+            raise HTTPException(503, note)
+        if detector is None:
+            use_legacy_real = sample is not None and profile == "real" and (file is None or not file.filename)
+            if use_legacy_real:
+                detector, legacy_note = real_detector()
+                note = "; ".join(filter(None, (note, legacy_note)))
+            else:
+                detector = dets.ClassicalDetector(params_for(profile, meters_per_pixel=METERS_PER_PIXEL))
+                note = (note or "") + " Using classical OpenCV fallback."
 
     h, w = img.shape
     t0 = time.perf_counter()
@@ -470,25 +524,41 @@ async def priority_transfer(sample: str | None = Form(None), file: UploadFile | 
     if img is None:
         raise HTTPException(400, "Could not decode this image")
     detections = None
-    detector_note = "No trained model weights installed; untrained saliency prioritizes visual regions, without claiming recognition."
-    if dets.find_yolo() is not None or dets.find_authors_yolov4() is not None:
+    active_name = "saliency"
+    detector, detector_note = active_sonar_detector()
+    if detector is None and (dets.find_yolo() is not None or dets.find_authors_yolov4() is not None):
         try:
             settings = params_for("real", meters_per_pixel=METERS_PER_PIXEL)
-            if dets.find_yolo() is not None:
-                detector = dets.FineTunedYoloDetector(settings)
-            else:
-                detector = dets.AuthorsYoloV4Detector(settings)
-            detections = detector.detect(cv2.cvtColor(img, cv2.COLOR_GRAY2BGR))
-            detector_note = (f"{detector.label}: predictions are unverified on unseen sonar domains; "
-                             "saliency fills remaining regions.")
+            detector = (dets.FineTunedYoloDetector(settings) if dets.find_yolo() is not None
+                        else dets.AuthorsYoloV4Detector(settings))
         except (dets.ModelUnavailable, RuntimeError, cv2.error) as exc:
-            detector_note = f"Trained detector unavailable ({type(exc).__name__}); using saliency."
+            detector_note = f"Legacy detector unavailable ({type(exc).__name__}); using saliency."
+    if detector is not None:
+        try:
+            detections = detector.detect(cv2.cvtColor(img, cv2.COLOR_GRAY2BGR))
+            active_name = detector.name
+            detector_note = (f"{detector.label}: unverified on unseen sonar domains; "
+                             "saliency fills remaining regions.")
+        except (RuntimeError, OSError, ValueError, cv2.error) as exc:
+            detector_note = f"Trained inference failed ({type(exc).__name__}); using saliency."
+            detections = None
     try:
         result = pr.simulate_progressive(source_data, rate_bps=rate_bps,
                                          detected=detections, corrupt_stage=corrupt_stage)
     except (pr.PriorityError, ft.TransferError, ValueError) as exc:
         raise HTTPException(400, str(exc)) from exc
-    return dict(**result, source=source, detector_note=detector_note)
+    return dict(
+        **result, source=source, detector=active_name, detector_note=detector_note,
+        detections_total=len(detections or []),
+        detected_objects=[
+            dict(
+                object_type=dets.class_name(d["class_id"], "Unknown"),
+                class_id=d["class_id"], confidence=d["confidence"],
+                box_px=list(d["box_px"]),
+            )
+            for d in (detections or []) if "box_px" in d
+        ],
+    )
 
 
 # ---------------------------------------------------------------- frontend
