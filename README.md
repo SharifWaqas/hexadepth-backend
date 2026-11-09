@@ -4,7 +4,7 @@ A hackathon research prototype that sends useful sonar information first: object
 
 This repository includes a **FastAPI backend**, Python packet/transport modules, browser demo, benchmarks, and automated tests.
 
-> **Important:** Underwater acoustic transfer times are **software simulations** based on selected bit rates and public modem specifications. No real acoustic modem or underwater hardware has been tested. Current default visual-region selection is not a validated object-recognition model; the separately trained YOLO pilot weights are **not included**.
+> **Important:** Underwater acoustic transfer times are **software simulations** based on selected bit rates and public modem specifications. No real acoustic modem or underwater hardware has been tested. Current default visual-region selection is not a validated object-recognition model; the optional trained DRISHTI YOLO11n checkpoint is **not included** and must be installed locally.
 
 ## Quick start (Windows / macOS / Linux)
 
@@ -30,6 +30,10 @@ Windows users can also double-click `START_HEXADEPTH.bat`.
 - **Simulated transfer-time comparison** against full-file delivery at the same selected link speed.
 - **Multiple detection modes**, with fallback when model weights are absent.
 - **Benchmark scripts** and tested API endpoints.
+
+## Trained sonar AI (optional)
+
+Run `INSTALL_SONAR_AI.bat` once on Windows (or follow [DRISHTI setup](docs/drishti-integration.md)) to install the private `best.pt` weights locally; then start/restart FastAPI. `GET /api/model/status` reports installation. Both `/api/analyze` and `/api/priority` prefer the trained YOLO11n detector when installed, and expose class names, boxes, and confidences. Default fallback remains available without model weights. v2 achieved 70.5% precision/56.4% recall on a same-dataset DRISHTI test set; performance on unseen sonar sources is unknown.
 
 ## For frontend developers
 
@@ -64,7 +68,7 @@ Verified on the prepared source: **324 passed, 4 skipped**. Skips cover optional
 - No real acoustic communications hardware is controlled by this code.
 - No military equipment or operational mine-detection system was tested.
 - The lossless option preserves the original file, but is **not** faster merely because it uses smaller packet frames.
-- The 2026 pilot YOLO training job is **not deployed here**, and its checkpoint is not in this repository.
+- The trained YOLO11n DRISHTI model is supported via local checkpoint installation; its weights are not distributed in this repository.
 - Multi-dataset generalization has **not** been demonstrated.
 
 ## Sample data attribution

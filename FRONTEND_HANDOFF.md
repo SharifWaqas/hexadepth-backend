@@ -67,3 +67,14 @@ Do not label simulated airtime as hardware-measured throughput. Do not claim the
 ## Tests
 
 `python -m pytest -q` — verified **324 passed, 4 skipped** when prepared.
+
+## Trained DRISHTI detector (optional)
+
+Run `INSTALL_SONAR_AI.bat` once on your backend machine to install Ultralytics and download the private `best.pt` checkpoint. Then restart the backend. See [installation and limitations](docs/drishti-integration.md).
+
+- `GET /api/model/status`: `installed`, `runtime_installed`, model metadata.
+- `POST /api/analyze`: optional form field `detector_mode=auto|sonar_yolo|classical`. Default `auto` uses the trained detector when installed. The response includes `detector`, `detector_note`, `detections_total`, and an `images.overlay` PNG with boxes.
+- `POST /api/priority`: automatically prefers the trained detector when installed; response includes `detector`, `detections_total`, `detected_objects` (each with `object_type`, `class_id`, `confidence` as 0–100, and `box_px`) and `regions` prioritized for transmission.
+- `/hexadepth-dashboard.html`: switch **Data: Ground truth** to **Live API** to show model-derived boxes, names, and confidence. With the AI checkpoint missing, the backend falls back and labels saliency honestly.
+
+The v2 model has 70.5% test precision on a same-dataset holdout, **not 90% and not externally validated**. Ghost-net PNGs were excluded from v2 training. Acoustic transmission times remain simulations.

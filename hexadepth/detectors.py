@@ -37,13 +37,22 @@ ROOT = Path(__file__).resolve().parent.parent
 # Packet class ids for the dataset's labels. Ids 0-4 are HexaDepth's rule-based shape classes
 # (packet.CLASS_NAMES); trained detectors report the dataset classes as 10 + dataset index.
 DATASET_CLASS_OFFSET = 10
-DATASET_CLASS_NAMES = {10: "MILCO (mine-like object)", 11: "NOMBO (non-mine bottom object)"}
+DATASET_CLASS_NAMES = {
+    10: "MILCO (mine-like object)",
+    11: "NOMBO (non-mine bottom object)",
+    20: "Submarine pipeline",
+    21: "Shipwreck",
+    22: "Ghost net (not independently validated)",
+    23: "Cylindrical underwater object",
+}
+SONAR_CLASS_OFFSET = 20
 
 PACKET_KEYS = ("obj_dx_m", "obj_dy_m", "extent_m", "class_id", "confidence", "vertices")
 
 AUTHORS_CFG_NAMES = ("yolov4-custom.cfg", "yolov4-custom.txt")   # the dataset ships the cfg as .txt
 AUTHORS_WEIGHTS = "yolov4-custom_5000.weights"
 YOLO_WEIGHTS = "yolo_milco_v8n.pt"
+SONAR_WEIGHTS = "hexadepth_sonar_best.pt"
 
 # Confidence thresholds are fixed defaults, NOT chosen on test images:
 #   authors_yolov4: Darknet's default detection threshold (0.25) and NMS IoU (0.45)
@@ -90,6 +99,19 @@ def find_yolo() -> Path | None:
     for d in model_dirs("yolo"):
         if (d / YOLO_WEIGHTS).is_file():
             return d / YOLO_WEIGHTS
+    return None
+
+
+def find_sonar_yolo() -> Path | None:
+    """Locate HexaDepth's DRISHTI YOLO11n checkpoint, without auto-downloading it."""
+    explicit = os.environ.get("HEXADEPTH_SONAR_WEIGHTS")
+    if explicit:
+        path = Path(explicit).expanduser()
+        return path if path.is_file() else None
+    for directory in model_dirs("sonar_yolo"):
+        path = directory / SONAR_WEIGHTS
+        if path.is_file():
+            return path
     return None
 
 
@@ -161,7 +183,7 @@ class BoxDetector:
         for x0, y0, x1, y1, cls, conf in sorted(self.boxes(img), key=lambda b: -b[5]):
             poly, raw_pts = outline_in_box(grey, (x0, y0, x1, y1), self.params)
             out.append(dict(**fields_from_polygon(poly, w, h, self.params.meters_per_pixel),
-                            class_id=DATASET_CLASS_OFFSET + int(cls),
+                            class_id=getattr(self, "class_offset", DATASET_CLASS_OFFSET) + int(cls),
                             confidence=int(round(100 * min(max(conf, 0.0), 1.0))),
                             polygon_px=poly, raw_contour_points=raw_pts,
                             box_px=(float(x0), float(y0), float(x1), float(y1))))
@@ -257,7 +279,57 @@ class FineTunedYoloDetector(BoxDetector):
                 for (x0, y0, x1, y1), c, s in zip(b.xyxy.tolist(), b.cls.tolist(), b.conf.tolist())]
 
 
+class SonarYoloDetector(BoxDetector):
+    """HexaDepth YOLO11n trained on DRISHTI side-scan sonar tiles.
+
+    Class 2 (ghost net) had PNG-only source examples excluded from the v2 JPG-only
+    training run; its recognition is not validated. No cross-dataset validation.
+    """
+    name = "sonar_yolo"
+    label = "HexaDepth YOLO11n (DRISHTI)"
+    class_offset = SONAR_CLASS_OFFSET
+    credit = "DRISHTI side-scan sonar dataset, CC BY-SA 4.0"
+    max_per_image = None
+
+    def __init__(self, params, weights: Path | None = None):
+        super().__init__(params)
+        checkpoint = Path(weights) if weights is not None else find_sonar_yolo()
+        if checkpoint is None or not checkpoint.is_file():
+            raise ModelUnavailable(
+                "HexaDepth sonar checkpoint missing; run INSTALL_SONAR_AI.bat "
+                "or place hexadepth_sonar_best.pt in models/"
+            )
+        threads = cv2.getNumThreads()
+        try:
+            from ultralytics import YOLO
+        except ImportError as exc:
+            raise ModelUnavailable("ultralytics is missing; install requirements-yolo.txt") from exc
+        finally:
+            cv2.setNumThreads(threads)
+        try:
+            self.model = YOLO(str(checkpoint))
+        except (OSError, RuntimeError, ValueError) as exc:
+            raise ModelUnavailable(f"Unable to load sonar checkpoint: {exc}") from exc
+        self.weights = checkpoint
+
+    def boxes(self, img):
+        if img.ndim == 2:
+            img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+        result = self.model.predict(
+            img, imgsz=416, conf=0.25, iou=0.7, device="cpu", verbose=False
+        )[0]
+        boxes = result.boxes
+        return [
+            (float(x0), float(y0), float(x1), float(y1), int(cls), float(score))
+            for (x0, y0, x1, y1), cls, score in zip(
+                boxes.xyxy.tolist(), boxes.cls.tolist(), boxes.conf.tolist()
+            )
+            if int(cls) in (0, 1, 2, 3)
+        ]
+
+
 DETECTORS = {
+    "sonar_yolo": SonarYoloDetector,
     "authors_yolov4": AuthorsYoloV4Detector,
     "yolo": FineTunedYoloDetector,
     "classical": ClassicalDetector,
