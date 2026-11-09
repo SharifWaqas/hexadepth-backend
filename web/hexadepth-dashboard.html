@@ -61,7 +61,8 @@ pre{max-height:200px;overflow:auto;font-size:12px;background:var(--bg);padding:8
  </nav>
  <span class="sp"></span>
  <label class="mute">Link speed <select id="rate"><option>1200</option><option selected>2400</option><option>9600</option></select> bps</label>
- <button id="mode" title="Switch between the dataset’s label files and your FastAPI backend">Data: Ground truth</button>
+ <span class="badge" id="aiStatus" role="status">Checking AI status…</span>
+ <button id="mode" title="Switch between live backend predictions and dataset ground-truth labels">Data: Live API</button>
  <input type="text" id="api" value="http://localhost:8000" aria-label="Backend URL" hidden>
  <button id="theme">Light / dark</button>
 </header>
@@ -79,7 +80,7 @@ pre{max-height:200px;overflow:auto;font-size:12px;background:var(--bg);padding:8
    </div>
    <details style="margin-top:12px"><summary class="mute">Raw backend response</summary><pre id="raw">Switch to Live API to see the response here.</pre></details>
   </div>
-  <div class="card"><h2>Detections <span class="mute" id="dn"></span></h2><div id="dl"></div></div>
+  <div class="card"><h2>Detections <span class="mute" id="dn"></span></h2><p class="mute" id="roinote">Important regions selected for transmission appear here after analysis.</p><div id="dl"></div></div>
  </div>
 </section>
 
@@ -89,6 +90,7 @@ pre{max-height:200px;overflow:auto;font-size:12px;background:var(--bg);padding:8
   <div class="chips" id="chips"></div>
   <canvas id="ct" width="640" height="360"></canvas>
   <div class="prog"><i id="pg"></i></div>
+  <p class="mute" id="wireStatus">Waiting for backend simulation; measurements are not from a physical modem.</p>
   <div class="stats">
    <div class="stat"><span class="mute">Simulated clock</span><b id="sc">0 ms</b></div>
    <div class="stat"><span class="mute">Bytes transferred</span><b id="sb">0 B</b></div>
@@ -103,7 +105,7 @@ pre{max-height:200px;overflow:auto;font-size:12px;background:var(--bg);padding:8
 <section id="cmp">
  <div class="card">
   <h2>Same frame, same link: which information arrives first?</h2>
-  <div class="lane"><h3 class="t">Traditional: full image, top to bottom</h3><div class="track" id="tt"></div></div>
+  <div class="lane"><h3 class="t">Conventional: wait for complete file</h3><div class="track" id="tt"></div></div>
   <div class="lane"><h3 class="h">HexaDepth: objects, overview, detail</h3><div class="track" id="th"></div></div>
   <div class="row"><button id="rep">Replay race</button><span class="mute">Both lanes share one time axis. Lane width = full-image delivery time.</span></div>
   <div class="wide"><table id="tbl"></table></div>
@@ -113,9 +115,9 @@ pre{max-height:200px;overflow:auto;font-size:12px;background:var(--bg);padding:8
 <p class="mute" style="margin-top:20px">Sonar imagery: DRISHTI dataset (Fazal et al.), CC BY-SA 4.0, with upstream SubPipe, AI4Shipwrecks and Sonar Imaging Mine Detection tiles. These are training-split images, shown for illustration, not as held-out evaluation.</p></main>
 <script>
 const $=s=>document.querySelector(s);
-let W=640,H=360,rate=2400,live=false,sel=-1,DET=[],cur=null,SRC='';
+let W=640,H=360,rate=2400,live=true,sel=-1,DET=[],ROI=[],cur=null,SRC='',API_OK=false;
 const DIR='downloaded_sonar_images/';
-const B={meta:64,prev:0,det:0,full:0,crops:[]};
+const B={meta:64,prev:0,det:0,full:0,crops:[],fullT:null,fullWire:null,detailImg:null};
 const SAMPLES=['pipe_1693569376.780_x1500.jpg','pipe_1693569378.780_x1500.jpg','wreckA_DM_Wilson_03_y3520_x1088.jpg','wreckA_DM_Wilson_03_y3520_x640.jpg','mine_0001_2021.jpg','mine_0002_2015.jpg','bg_1693569219.799_x1000.jpg','synth_ghost_net_00001.png'];
 const KINDS=[['pipe','Pipeline'],['wreck','Shipwreck'],['mine','Cylindrical object'],['synth_ghost','Ghost net (synthetic)'],['bg','Background, no object']];
 const kind=n=>(KINDS.find(k=>n.startsWith(k[0]))||[0,'Object'])[1];
@@ -124,7 +126,8 @@ const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim
 const fmtT=s=>s<1?(s*1000).toFixed(0)+' ms':s<120?s.toFixed(1)+' s':(s/60).toFixed(1)+' min';
 const fmtB=b=>b<1024?Math.round(b)+' B':b<1048576?(b/1024).toFixed(1)+' KB':(b/1048576).toFixed(2)+' MB';
 let METHOD='';B.t=null;B.ovImg=null;
-const T=()=>{if(B.t)return{...B.t,full:B.full*8/rate};const a=B.meta*8/rate,b=a+B.prev*8/rate,c=b+B.det*8/rate;return{a,b,c,full:B.full*8/rate}};
+const loadDataImage=url=>new Promise(resolve=>{if(!url)return resolve(null);const im=new Image();im.onload=()=>resolve(im);im.onerror=()=>resolve(null);im.src=url});
+const T=()=>{if(B.t)return{...B.t,full:B.fullT??B.full*8/rate};const a=B.meta*8/rate,b=a+B.prev*8/rate,c=b+B.det*8/rate;return{a,b,c,full:B.full*8/rate}};
 const src=document.createElement('canvas'),pv=document.createElement('canvas');
 
 /* ---- loading real images, labels and measuring real payloads ---- */
@@ -135,7 +138,7 @@ function parseYolo(txt,label){return txt.split(/\r?\n/).map(l=>l.trim().split(/\
 async function payload(){
  const pw=Math.max(16,Math.ceil(W/16)),ph=Math.max(8,Math.round(pw*H/W));pv.width=pw;pv.height=ph;pv.getContext('2d').drawImage(src,0,0,pw,ph);
  B.prev=await enc(pv,.5);B.crops=[];
- for(const o of DET){const c=document.createElement('canvas');c.width=Math.max(1,Math.round(o.w*W));c.height=Math.max(1,Math.round(o.h*H));
+ for(const o of ROI){const c=document.createElement('canvas');c.width=Math.max(1,Math.round(o.w*W));c.height=Math.max(1,Math.round(o.h*H));
   c.getContext('2d').drawImage(src,o.x*W,o.y*H,o.w*W,o.h*H,0,0,c.width,c.height);B.crops.push(await enc(c,.85))}
  B.det=B.crops.reduce((a,b)=>a+b,0);B.meta=64*Math.max(1,DET.length)}
 async function load(it){
@@ -147,18 +150,52 @@ async function load(it){
   const bmp=await createImageBitmap(blob),k=Math.min(1,1600/Math.max(bmp.width,bmp.height));
   W=Math.round(bmp.width*k);H=Math.round(bmp.height*k);src.width=W;src.height=H;src.getContext('2d').drawImage(bmp,0,0,W,H);
   ['#cd','#ct'].forEach(s=>{$(s).width=W;$(s).height=H});
-  cur={it,blob};B.full=blob.size;DET=parseYolo(txt,kind(it.name));
+  cur={it,blob};B.full=blob.size;B.fullT=null;B.fullWire=null;DET=parseYolo(txt,kind(it.name));ROI=DET.slice(0,2);API_OK=false;
   SRC=DET.length?'ground-truth labels':'no label file found';sel=-1;note('');
   return true
  }catch(e){note('Could not load '+it.name+' ('+e.message+'). Run download_samples.py, copy downloaded_sonar_images/ next to this page, and serve it over http, or use Add images.');return false}}
 async function detect(){
- B.t=null;B.ovImg=null;METHOD='';
- if(live&&cur){try{const j=await callLive(cur.blob);const m=mapResult(j);SRC=(j.detector==='sonar_yolo'?'HexaDepth trained YOLO':'backend regions')+(METHOD?': '+METHOD:'');await payload();if(m.by)Object.assign(B,m.by);if(m.full)B.full=m.full;
-   if(m.img){B.ovImg=await new Promise(r=>{const im=new Image();im.onload=()=>r(im);im.onerror=()=>r(null);im.src=m.img})}
-   if(m.t){B.t={a:m.t.a,b:m.t.b,c:m.t.c??m.t.b+B.det*8/rate}}}
-  catch(e){$('#raw').textContent='Live call failed: '+e.message+'\nShowing ground-truth labels instead. If the backend is on another port, enable CORS or host this file from its web/ folder.';await payload()}}
- else await payload();
- $('#src').textContent=SRC?'· boxes from '+SRC:'';refresh();scan()}
+ B.t=null;B.ovImg=null;B.detailImg=null;B.fullT=null;B.fullWire=null;METHOD='';
+ if(live&&cur){
+  try{
+   const j=await callLive(cur.blob);
+   if(!j.ok)throw Error(j.error||'Backend failed to generate a progressive transmission');
+   const m=mapResult(j);
+   API_OK=true;
+   SRC=j.detector==='sonar_yolo'?'HexaDepth YOLO11n AI detections':'Backend '+j.detector+' (not HexaDepth YOLO)';
+   await payload();
+   if(m.by)Object.assign(B,m.by);
+   if(m.full)B.full=m.full;
+   if(m.fullT!=null)B.fullT=m.fullT;
+   if(m.fullWire!=null)B.fullWire=m.fullWire;
+   B.ovImg=await loadDataImage(m.img);
+   B.detailImg=await loadDataImage(m.detailImg);
+   if(m.t)B.t={a:m.t.a,b:m.t.b,c:m.t.c??m.t.b+B.det*8/rate};
+   $('#aiStatus').textContent=j.detector==='sonar_yolo'?'AI active':'Fallback: '+j.detector;
+   note(j.detector==='sonar_yolo'
+    ?j.detections_total+' AI objects found. '+ROI.length+' regions prioritized for simulated transmission.'
+    :'The trained AI is not active. Backend is using '+j.detector+'. '+(j.detector_note||''));
+   const stages=j.stages||[],packets=stages.reduce((n,x)=>n+(x.packet_count||0),0);
+   $('#wireStatus').textContent=packets+' CRC-framed packets; '+(stages.every(x=>x.integrity_ok)?'integrity verified':'integrity failure')+
+    '. Transmission times are software estimates, not a physical acoustic modem.';
+  }catch(e){
+   API_OK=false;DET=[];ROI=[];SRC='Live API unavailable';
+   $('#aiStatus').textContent='API error';
+   note('LIVE API ERROR: '+e.message+'. Start the backend and install the model; no ground-truth boxes are shown as AI.');
+   $('#raw').textContent='Live request failed: '+e.message;
+   $('#wireStatus').textContent='No backend transmission result available.';
+  }
+ }else{
+  API_OK=false;await payload();
+  SRC=DET.length?'dataset ground-truth labels (NOT AI)':'no labels in example (NOT AI)';
+  note('Ground-truth preview mode; the trained backend model is not being queried.');
+  $('#aiStatus').textContent='Ground truth only';
+  $('#wireStatus').textContent='Browser-only illustration, not backend transmission.';
+ }
+ $('#src').textContent=SRC?'· '+SRC:'';
+ refresh();
+ if(!live||API_OK)scan();
+}
 
 /* ---- view 1 ---- */
 const cd=()=>$('#cd').getContext('2d');
@@ -167,6 +204,9 @@ function box(c,o,col,hot){const x=o.x*W,y=o.y*H,w=o.w*W,h=o.h*H,fs=Math.max(12,W
  c.fillStyle=col;c.fillRect(ly===y?x:x,ly,c.measureText(t).width+10,fs*1.5);c.fillStyle='#000';c.fillText(t,x+5,ly+fs*1.1)}
 function drawDetect(limit=1.1){if(!W)return;const c=cd();c.drawImage(src,0,0);DET.forEach((o,i)=>{if(o.y+o.h<=limit)box(c,o,css('--acc'),i===sel)})}
 function list(){$('#dn').textContent='('+DET.length+')';
+ $('#roinote').textContent=live
+  ?ROI.length+' priority regions selected for early transmission out of '+DET.length+' AI-detected objects (saliency fills gaps).'
+  :'Dataset labels: not AI detections. '+ROI.length+' illustrative regions.';
  $('#dl').innerHTML=DET.length?DET.map((o,i)=>`<div class="det ${i===sel?'sel':''}" data-i="${i}" tabindex="0"><b>${o.label}</b>
   ${o.conf!=null?`<div class="bar"><i style="width:${o.conf*100}%"></i></div><div class="mute">Confidence ${(o.conf*100).toFixed(0)}%</div>`:(o.sal!=null?`<div class="bar"><i style="width:${o.sal/255*100}%"></i></div><div class="mute">Saliency score ${o.sal} of 255. This is not a trained-model confidence${METHOD?' ('+METHOD+')':''}.</div>`:'<div class="mute">Ground-truth label, no confidence score.</div>')}
   <div class="mute">Box x ${Math.round(o.x*W)}, y ${Math.round(o.y*H)}, ${Math.round(o.w*W)}×${Math.round(o.h*H)} px<br>Centre ${((o.x+o.w/2)*100).toFixed(1)}% across, ${((o.y+o.h/2)*100).toFixed(1)}% down</div></div>`).join(''):'<p class="mute">No objects in this frame.</p>';
@@ -182,9 +222,14 @@ function render(t){if(!cur)return;const ct=$('#ct').getContext('2d'),{a,b,c}=T()
  for(let i=0;i<W;i+=W/16){ct.beginPath();ct.moveTo(i,0);ct.lineTo(i,H);ct.stroke()}
  for(let i=0;i<H;i+=W/16){ct.beginPath();ct.moveTo(0,i);ct.lineTo(W,i);ct.stroke()}
  if(t>=a){const p=Math.min(1,(t-a)/Math.max(1e-6,b-a));ct.save();ct.beginPath();ct.rect(0,0,W,H*p);ct.clip();ct.imageSmoothingEnabled=false;ct.drawImage(B.ovImg||pv,0,0,W,H);ct.restore()}
- let acu=0;DET.forEach((o,i)=>{acu+=B.crops[i]||0;if(t>=b+acu*8/rate)ct.drawImage(src,o.x*W,o.y*H,o.w*W,o.h*H,o.x*W,o.y*H,o.w*W,o.h*H)});
- if(t>0&&t<a){ct.fillStyle=css('--mute');ct.font=Math.max(14,W/45)+'px system-ui';ct.fillText('Receiving object data…',16,H/10)}
- if(t>=a)DET.forEach(o=>box(ct,o,acc,false));
+ if(live&&API_OK){
+  // Show the actual backend-reconstructed image once its detail stage has completed.
+  if(t>=c&&B.detailImg)ct.drawImage(B.detailImg,0,0,W,H);
+ }else{
+  let acu=0;ROI.forEach((o,i)=>{acu+=B.crops[i]||0;if(t>=b+acu*8/rate)ct.drawImage(src,o.x*W,o.y*H,o.w*W,o.h*H,o.x*W,o.y*H,o.w*W,o.h*H)});
+ }
+ if(t>0&&t<a){ct.fillStyle=css('--mute');ct.font=Math.max(14,W/45)+'px system-ui';ct.fillText('Receiving priority metadata…',16,H/10)}
+ if(t>=a)ROI.forEach(o=>box(ct,o,acc,false));
  const sg=(s,e,by)=>t<=s?0:Math.min(1,(t-s)/Math.max(1e-6,e-s))*by,sent=sg(0,a,B.meta)+sg(a,b,B.prev)+sg(b,c,B.det);
  ['c0','c1','c2'].forEach((id,i)=>$('#'+id).classList.toggle('done',t>=[a,b,c][i]));
  $('#sc').textContent=fmtT(t);$('#sb').textContent=fmtB(sent);$('#pg').style.width=Math.min(100,t/c*100)+'%';
@@ -196,40 +241,69 @@ function chips(){const {a,b,c}=T();
  .map((s,i)=>`<div class="chip" id="c${i}"><b>${s[0]}</b><span class="mute">${fmtB(s[1])} · done at ${fmtT(s[2])}</span></div>`).join('')}
 
 /* ---- view 3 ---- */
-function compare(race){if(!cur)return;const {a,b,c,full}=T(),f=x=>x/full*100,has=DET.length>0,first=has?Math.min(...DET.map(o=>o.y+o.h)):1,tf=first*full;
- $('#tt').innerHTML=`<div class="seg" style="left:0;width:100%;background:var(--trad);opacity:.35"></div><div class="mk" style="left:${first*100}%" title="First object fully received"></div>`;
+function compare(race){
+ if(!cur||live&&!API_OK)return;
+ const {a,b,c,full}=T(),scale=Math.max(.001,full,c),f=x=>Math.min(100,Math.max(0,x/scale*100));
+ const tot=B.meta+B.prev+B.det,traditional=B.fullWire??B.full;
+ $('#tt').innerHTML=`<div class="seg" style="left:0;width:${f(full)}%;background:var(--trad);opacity:.4"></div><div class="mk" style="left:${f(full)}%" title="Entire original file is available"></div>`;
  $('#th').innerHTML=`<div class="seg" style="left:0;width:${f(a)}%;background:var(--acc);min-width:3px"></div><div class="seg" style="left:${f(a)}%;width:${f(b-a)}%;background:var(--hex);opacity:.55"></div><div class="seg" style="left:${f(b)}%;width:${f(c-b)}%;background:var(--hex)"></div>`;
- const tot=B.meta+B.prev+B.det;
- $('#tbl').innerHTML=`<tr><th></th><th class="t">Traditional</th><th class="h">HexaDepth</th></tr>
- <tr><td>Time to first useful information</td><td>${fmtT(tf)}</td><td>${fmtT(a)} (${Math.round(tf/a).toLocaleString()}× sooner)</td></tr>
- <tr><td>Bytes before the first object is known</td><td>${fmtB(first*B.full)}</td><td>${fmtB(B.meta)}</td></tr>
- <tr><td>Time to usable overview</td><td>${fmtT(full)}</td><td>${fmtT(b)}</td></tr>
- <tr><td>Total data sent</td><td>${fmtB(B.full)}</td><td>${fmtB(tot)} (${(tot/B.full*100).toFixed(1)}% of the file)</td></tr>
- <tr><td>Link usage at ${rate.toLocaleString()} bps</td><td>${fmtT(full)} airtime</td><td>${fmtT(c)} airtime</td></tr>`+(has?'':'<tr><td colspan=3 class="mute">No objects here: traditional delivery only reveals “nothing found” when the last row arrives.</td></tr>');
- ['#tt','#th'].forEach(s=>{const e=$(s);e.classList.remove('go');e.classList.add('snap');e.style.clipPath='';void e.offsetWidth;
-  e.classList.remove('snap');if(race){void e.offsetWidth;e.classList.add('go')}else{e.classList.add('snap');e.style.clipPath='inset(0 0 0 0)'}})}
+ $('#tbl').innerHTML=`<tr><th>Metric (modeled)</th><th class="t">Conventional full-file</th><th class="h">HexaDepth priority preview</th></tr>
+ <tr><td>First usable region information</td><td>${fmtT(full)} (full file arrives)</td><td>${fmtT(a)} (ROI metadata)</td></tr>
+ <tr><td>First whole-scene overview</td><td>${fmtT(full)}</td><td>${fmtT(b)}</td></tr>
+ <tr><td>Important-region detail</td><td>${fmtT(full)}</td><td>${fmtT(c)}</td></tr>
+ <tr><td>Bytes delivered for the above result</td><td>${fmtB(traditional)} (complete file)</td><td>${fmtB(tot)} (lossy preview)</td></tr>
+ <tr><td>Time to byte-exact original</td><td>${fmtT(full)}</td><td>Optional separate transfer</td></tr>
+ <tr><td>Link speed</td><td>${rate.toLocaleString()} bps</td><td>${rate.toLocaleString()} bps</td></tr>`;
+ ['#tt','#th'].forEach(q=>{const e=$(q);e.classList.remove('go');e.classList.add('snap');e.style.clipPath='';void e.offsetWidth;
+  e.classList.remove('snap');if(race){void e.offsetWidth;e.classList.add('go')}else{e.classList.add('snap');e.style.clipPath='inset(0 0 0 0)'}})
+}
 
 /* ---- backend adapter ---- */
 async function callLive(blob){const API=$('#api').value.replace(/\/$/,''),f=new FormData();
  f.append('file',blob,cur.it.name);f.append('rate_bps',rate);
  const r=await fetch(API+'/api/priority',{method:'POST',body:f});if(!r.ok)throw Error(await r.text());
  const j=await r.json();$('#raw').textContent=JSON.stringify(j,(k,v)=>typeof v==='string'&&v.startsWith('data:image')?'[image omitted]':(typeof v==='string'&&v.length>80?v.slice(0,80)+'…':v),2);return j}
-function mapResult(j){/* Matches the HexaDepth /api/priority response: width, height, original_bytes, regions[{box:[x1,y1,x2,y2],score,class_id}], stages[{id,wire_bytes,available_at_seconds,image}] */
- const out={},iw=j.width||W,ih=j.height||H;METHOD=j.method||'';
- if(Array.isArray(j.regions)){DET=j.regions.map((o,i)=>{const b=o.box;
-  const matching=(j.detected_objects||[]).filter(d=>d.class_id===o.class_id).sort((a,b)=>b.confidence-a.confidence);
-  const d=matching.find(d=>{const c=d.box_px||[];return c.length===4&&c[0]<b[2]&&c[2]>b[0]&&c[1]<b[3]&&c[3]>b[1]})||matching[0];
-  return{label:d?.object_type||(o.class_id!=null?'Class '+o.class_id:'Salient region'),
-   conf:d?d.confidence/100:null,sal:d?null:o.score,
-   x:b[0]/iw,y:b[1]/ih,w:(b[2]-b[0])/iw,h:(b[3]-b[1])/ih}})}
+function mapResult(j){
+ // Display ALL model detections; transmit only selected priority regions.
+ const out={},iw=j.width||W,ih=j.height||H;
+ METHOD=j.method||'';
+ ROI=(j.regions||[]).map(o=>{
+  const p=o.box||[0,0,0,0],c=(j.detected_objects||[]).find(d=>d.class_id===o.class_id
+   &&d.box_px&&d.box_px[0]<p[2]&&d.box_px[2]>p[0]&&d.box_px[1]<p[3]&&d.box_px[3]>p[1]);
+  return {label:c?.object_type||(o.class_id!=null?'Priority class '+o.class_id:'Priority region (unverified)'),
+   conf:c?c.confidence/100:null,sal:c?null:o.score,
+   x:p[0]/iw,y:p[1]/ih,w:(p[2]-p[0])/iw,h:(p[3]-p[1])/ih};
+ });
+ DET=(j.detected_objects||[]).filter(d=>d.box_px?.length===4).map(d=>{
+  const p=d.box_px;return{label:d.object_type||'Detected object',conf:d.confidence/100,
+   x:p[0]/iw,y:p[1]/ih,w:(p[2]-p[0])/iw,h:(p[3]-p[1])/ih};
+ });
  if(j.original_bytes)out.full=j.original_bytes;
+ if(Number.isFinite(j.full_file_estimate_seconds))out.fullT=j.full_file_estimate_seconds;
+ if(Number.isFinite(j.full_file_packets))out.fullWire=j.full_file_packets*64;
  const st=Array.isArray(j.stages)?j.stages:[],g=re=>st.find(x=>re.test(x.id||x.title||'')),m=g(/meta/i),o=g(/overview/i),d=g(/detail|region|roi|crop/i);
- if(m&&o){out.by={meta:m.wire_bytes,prev:o.wire_bytes};if(d)out.by.det=d.wire_bytes;
+ if(m&&o){
+  out.by={meta:m.wire_bytes,prev:o.wire_bytes};
+  if(d)out.by.det=d.wire_bytes;
   const a=m.available_at_seconds,b=o.available_at_seconds;
-  if(isFinite(a)&&isFinite(b))out.t={a,b,c:d&&isFinite(d.available_at_seconds)?d.available_at_seconds:null};
-  if(o.image)out.img=o.image}
- return out}
-function refresh(){chips();render(T().c);compare(false);drawDetect();list()}
+  if(Number.isFinite(a)&&Number.isFinite(b))out.t={a,b,c:d&&Number.isFinite(d.available_at_seconds)?d.available_at_seconds:null};
+  out.img=o.image;out.detailImg=d?.image;
+ }
+ return out;
+}
+
+function refresh(){
+ if(live&&!API_OK){
+  $('#chips').textContent='No live transmission data yet.';
+  $('#tbl').textContent='Waiting for a valid backend response.';
+  $('#dn').textContent='(0)';
+  $('#dl').textContent='No live detection results. Check the backend connection.';
+  $('#roinote').textContent='No priority metadata available.';
+  $('#sc').textContent='—';$('#sb').textContent='—';$('#sf').textContent='—';
+  $('#pg').style.width='0%';drawDetect();return;
+ }
+ chips();render(T().c);compare(false);drawDetect();list();
+}
 
 /* ---- wiring ---- */
 function pickList(){$('#pick').innerHTML=ITEMS.map((x,i)=>`<option value="${i}">${kind(x.name)} · ${x.name.slice(0,26)}</option>`).join('')}
@@ -244,9 +318,17 @@ $('#file').onchange=async e=>{const fs=[...e.target.files],txt={};
  const imgs=fs.filter(f=>/^image\//.test(f.type)).map(f=>({name:f.name,file:f,txt:txt[f.name.replace(/\.[^.]+$/,'')]}));
  if(!imgs.length)return;const base=ITEMS.length;ITEMS=ITEMS.concat(imgs);pickList();$('#pick').value=base;choose(base)};
 $('#play').onclick=play;$('#spd').onchange=play;$('#rep').onclick=()=>compare(true);
-$('#rate').onchange=async e=>{rate=+e.target.value;refresh()};
+$('#rate').onchange=async e=>{rate=+e.target.value;if(live&&cur)await detect();else refresh()};
 $('#mode').onclick=()=>{live=!live;$('#mode').textContent='Data: '+(live?'Live API':'Ground truth');$('#api').hidden=!live;if(cur)detect()};
 $('#theme').onclick=()=>{const r=document.documentElement,d=r.dataset.theme==='dark'||(!r.dataset.theme&&matchMedia('(prefers-color-scheme:dark)').matches);
  r.dataset.theme=d?'light':'dark';refresh()};
-pickList();choose(0);
+async function checkModelStatus(){
+ try{
+  const r=await fetch($('#api').value.replace(/\/$/,'')+'/api/model/status');
+  if(!r.ok)throw Error('HTTP '+r.status);
+  const d=await r.json();
+  $('#aiStatus').textContent=!d.installed?'AI checkpoint missing':!d.runtime_installed?'YOLO runtime missing':'AI installed';
+ }catch(e){$('#aiStatus').textContent='Backend offline'}
+}
+pickList();checkModelStatus();choose(0);
 </script></body></html>
