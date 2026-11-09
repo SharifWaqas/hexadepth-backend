@@ -153,7 +153,7 @@ async function load(it){
  }catch(e){note('Could not load '+it.name+' ('+e.message+'). Run download_samples.py, copy downloaded_sonar_images/ next to this page, and serve it over http, or use Add images.');return false}}
 async function detect(){
  B.t=null;B.ovImg=null;METHOD='';
- if(live&&cur){try{const j=await callLive(cur.blob);const m=mapResult(j);SRC='backend regions'+(METHOD?': '+METHOD:'');await payload();if(m.by)Object.assign(B,m.by);if(m.full)B.full=m.full;
+ if(live&&cur){try{const j=await callLive(cur.blob);const m=mapResult(j);SRC=(j.detector==='sonar_yolo'?'HexaDepth trained YOLO':'backend regions')+(METHOD?': '+METHOD:'');await payload();if(m.by)Object.assign(B,m.by);if(m.full)B.full=m.full;
    if(m.img){B.ovImg=await new Promise(r=>{const im=new Image();im.onload=()=>r(im);im.onerror=()=>r(null);im.src=m.img})}
    if(m.t){B.t={a:m.t.a,b:m.t.b,c:m.t.c??m.t.b+B.det*8/rate}}}
   catch(e){$('#raw').textContent='Live call failed: '+e.message+'\nShowing ground-truth labels instead. If the backend is on another port, enable CORS or host this file from its web/ folder.';await payload()}}
@@ -217,7 +217,10 @@ async function callLive(blob){const API=$('#api').value.replace(/\/$/,''),f=new 
 function mapResult(j){/* Matches the HexaDepth /api/priority response: width, height, original_bytes, regions[{box:[x1,y1,x2,y2],score,class_id}], stages[{id,wire_bytes,available_at_seconds,image}] */
  const out={},iw=j.width||W,ih=j.height||H;METHOD=j.method||'';
  if(Array.isArray(j.regions)){DET=j.regions.map((o,i)=>{const b=o.box;
-  return{label:o.class_name||(o.class_id!=null?'Class '+o.class_id:'Salient region'),conf:o.confidence??null,sal:o.confidence==null?o.score:null,
+  const matching=(j.detected_objects||[]).filter(d=>d.class_id===o.class_id).sort((a,b)=>b.confidence-a.confidence);
+  const d=matching.find(d=>{const c=d.box_px||[];return c.length===4&&c[0]<b[2]&&c[2]>b[0]&&c[1]<b[3]&&c[3]>b[1]})||matching[0];
+  return{label:d?.object_type||(o.class_id!=null?'Class '+o.class_id:'Salient region'),
+   conf:d?d.confidence/100:null,sal:d?null:o.score,
    x:b[0]/iw,y:b[1]/ih,w:(b[2]-b[0])/iw,h:(b[3]-b[1])/ih}})}
  if(j.original_bytes)out.full=j.original_bytes;
  const st=Array.isArray(j.stages)?j.stages:[],g=re=>st.find(x=>re.test(x.id||x.title||'')),m=g(/meta/i),o=g(/overview/i),d=g(/detail|region|roi|crop/i);
