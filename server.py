@@ -126,8 +126,23 @@ def real_samples() -> list[dict]:
     return out
 
 
+DRISHTI_WEB = WEB / "samples" / "drishti"
+DRISHTI_SAMPLES = [
+    ("pipe_1693569376.780_x1500.jpg", "Pipeline · 01"),
+    ("pipe_1693569378.780_x1500.jpg", "Pipeline · 02"),
+    ("wreckA_DM_Wilson_03_y3520_x1088.jpg", "Shipwreck · 01"),
+    ("wreckA_DM_Wilson_03_y3520_x640.jpg", "Shipwreck · 02"),
+    ("mine_0001_2021.jpg", "Cylindrical object · 01"),
+    ("mine_0002_2015.jpg", "Cylindrical object · 02"),
+    ("bg_1693569219.799_x1000.jpg", "Background · no labeled object"),
+]
+
+
 def find_sample(name: str) -> tuple[Path, str]:
     """(path, vision profile) for a listed sample. Exact match only, so no path traversal."""
+    for filename, _ in DRISHTI_SAMPLES:
+        if name == filename and (DRISHTI_WEB / filename).is_file():
+            return DRISHTI_WEB / filename, "default"
     for p in sample_paths():
         if p.name == name:
             return p, "default"
@@ -198,20 +213,18 @@ def sonar_model_status():
 
 @app.get("/api/samples")
 def list_samples():
-    synthetic = [
-        dict(name=p.name, short=sample_short(p), label=sample_label(p), url=f"/api/samples/{p.name}",
-             group="synthetic", profile="default")
-        for p in sample_paths()
-    ]
-    real = [
-        dict(name=r["name"], short=f"Real data · MILCO {r['year']}",
-             label=(f"Real side-scan sonar, survey year {r['year']}. Sizes in metres use a nominal "
-                    "5 cm/pixel; the dataset does not publish resolution."),
-             url=f"/api/samples/{r['name']}", group="real", profile="real", credit=REAL_CREDIT,
-             attribution=REAL_ATTRIBUTION, bundled=r["path"].parent == REAL_WEB)
-        for r in real_samples()
-    ]
-    return synthetic + real
+    return [dict(
+        name=filename, short=label, label=label,
+        url=f"/api/samples/{filename}", group="real", profile="default",
+        dataset="DRISHTI", split="train", synthetic=False,
+        credit="DRISHTI · Rehan Fazal and contributors · CC BY-SA 4.0",
+        attribution=dict(
+            source="https://huggingface.co/datasets/rehan9599/drishti-sss",
+            licence="CC BY-SA 4.0",
+            licence_url="https://creativecommons.org/licenses/by-sa/4.0/",
+            note="Real training-split image. Sample names describe dataset categories, not model predictions. Not held-out evaluation.",
+        ), bundled=True,
+    ) for filename, label in DRISHTI_SAMPLES if (DRISHTI_WEB / filename).is_file()]
 
 
 @app.get("/api/samples/{name}")
