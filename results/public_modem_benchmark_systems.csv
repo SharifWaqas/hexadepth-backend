@@ -1,0 +1,6 @@
+system,rate_bps,rate_type,source,original_jpeg_lower_bound_seconds,hexadepth_one_link_ideal_seconds,hexadepth_one_link_minutes,hexadepth_four_truly_independent_links_ideal_seconds,same_total_capacity_split_four_ideal_seconds,half_advertised_rate_illustration_seconds
+Teledyne Benthos ATM-900 / Gavia (MFSK upper setting),1200,published modulation setting (not end-to-end goodput),https://www.teledynemarine.com/brands/gavia/acoustic-modem-option-control-module?ProductLineID=19,2187.57,3030.61,50.51,757.76,3030.61,6061.23
+WHOI Micromodem single receiver (documented throughput),3343,"best-case continuous throughput example, no ACK",https://acomms.whoi.edu/micro-modem,785.25,1087.87,18.13,272.0,1087.87,2175.73
+WHOI Micromodem four-channel receiver (documented throughput),1622,"receiver diversity, NOT four independent transmissions",https://acomms.whoi.edu/micro-modem,1618.43,2242.13,37.37,,2242.13,4484.26
+EvoLogics 18/34 (advertised peak),13900,"peak acoustic link rate, not guaranteed app goodput",https://www.evologics.com/underwater-acoustic-modem-series/18-34,188.86,261.64,4.36,65.42,261.64,523.27
+Teledyne Benthos ATM-900 / Gavia (optional PSK peak),15360,"published optional PSK peak, not end-to-end goodput",https://www.teledynemarine.com/brands/gavia/acoustic-modem-option-control-module?ProductLineID=19,170.9,236.77,3.95,59.2,236.77,473.53

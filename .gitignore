@@ -218,3 +218,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# HexaDepth-specific ignored files
+/samples/
+data/real/
+models/*.pt
+*.weights

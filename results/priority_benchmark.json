@@ -1,0 +1,62 @@
+[
+  {
+    "sample": "0001_2021.jpg",
+    "original_bytes": 35061,
+    "region_metadata_bytes_on_wire": 64,
+    "overview_bytes_on_wire": 1984,
+    "detail_bytes_on_wire": 7552,
+    "region_time_s": 0.693,
+    "overview_time_s": 7.093,
+    "detail_time_s": 25.653,
+    "full_file_estimate_s": 162.187,
+    "overview_vs_full_time_ratio": 22.87,
+    "overview_psnr_db": 24.67,
+    "detail_psnr_db": 26.56,
+    "trained_model_used": false
+  },
+  {
+    "sample": "0009_2017.jpg",
+    "original_bytes": 342110,
+    "region_metadata_bytes_on_wire": 64,
+    "overview_bytes_on_wire": 1984,
+    "detail_bytes_on_wire": 15616,
+    "region_time_s": 0.693,
+    "overview_time_s": 7.093,
+    "detail_time_s": 52.533,
+    "full_file_estimate_s": 1582.347,
+    "overview_vs_full_time_ratio": 223.09,
+    "overview_psnr_db": 19.18,
+    "detail_psnr_db": 19.49,
+    "trained_model_used": false
+  },
+  {
+    "sample": "0307_2010.jpg",
+    "original_bytes": 312519,
+    "region_metadata_bytes_on_wire": 64,
+    "overview_bytes_on_wire": 1920,
+    "detail_bytes_on_wire": 15296,
+    "region_time_s": 0.693,
+    "overview_time_s": 6.88,
+    "detail_time_s": 51.467,
+    "full_file_estimate_s": 1445.6,
+    "overview_vs_full_time_ratio": 210.12,
+    "overview_psnr_db": 19.85,
+    "detail_psnr_db": 20.11,
+    "trained_model_used": false
+  },
+  {
+    "sample": "0440_2018.jpg",
+    "original_bytes": 328136,
+    "region_metadata_bytes_on_wire": 64,
+    "overview_bytes_on_wire": 2048,
+    "detail_bytes_on_wire": 12992,
+    "region_time_s": 0.693,
+    "overview_time_s": 7.307,
+    "detail_time_s": 43.787,
+    "full_file_estimate_s": 1515.787,
+    "overview_vs_full_time_ratio": 207.44,
+    "overview_psnr_db": 19.6,
+    "detail_psnr_db": 20.07,
+    "trained_model_used": false
+  }
+]

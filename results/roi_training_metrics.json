@@ -1,0 +1,93 @@
+{
+  "model": "small CNN synthetic-return ROI ranker",
+  "objective": "injected target-like pattern vs background",
+  "real_object_detection_validated": false,
+  "has_semantic_classes": false,
+  "trained_on_labeled_external_datasets": false,
+  "sources": {
+    "train_real_files": [
+      "0009_2017.jpg",
+      "0307_2010.jpg",
+      "0440_2018.jpg"
+    ],
+    "train_synthetic_files": [
+      "01_pipeline.png",
+      "02_container.png",
+      "03_tire.png"
+    ],
+    "heldout_real_files": [
+      "0001_2021.jpg"
+    ],
+    "heldout_synthetic_files": [
+      "04_reef.png",
+      "05_wreck.png"
+    ]
+  },
+  "train_patches": 2200,
+  "heldout_patches": 450,
+  "novel_shape_patches": 450,
+  "heldout_same_shapes": {
+    "n": 450,
+    "roc_auc": 0.9779358024691358,
+    "precision": 0.9805825242718447,
+    "recall": 0.8977777777777778,
+    "f1": 0.9373549883990719,
+    "false_positive_rate": 0.017777777777777778,
+    "true_positive": 202,
+    "false_positive": 4,
+    "false_negative": 23,
+    "true_negative": 221,
+    "threshold": 0.65
+  },
+  "heldout_novel_shapes": {
+    "n": 450,
+    "roc_auc": 0.970627160493827,
+    "precision": 0.96,
+    "recall": 0.8533333333333334,
+    "f1": 0.9035294117647059,
+    "false_positive_rate": 0.035555555555555556,
+    "true_positive": 192,
+    "false_positive": 8,
+    "false_negative": 33,
+    "true_negative": 217,
+    "threshold": 0.65
+  },
+  "epochs": 6,
+  "epoch_logs": [
+    {
+      "epoch": 1,
+      "training_loss": 0.6059958024458452,
+      "heldout_auc_monitor": 0.928158024691358
+    },
+    {
+      "epoch": 2,
+      "training_loss": 0.33715814536268063,
+      "heldout_auc_monitor": 0.9522567901234569
+    },
+    {
+      "epoch": 3,
+      "training_loss": 0.28860865235328675,
+      "heldout_auc_monitor": 0.9646222222222223
+    },
+    {
+      "epoch": 4,
+      "training_loss": 0.24491986729881982,
+      "heldout_auc_monitor": 0.9693432098765431
+    },
+    {
+      "epoch": 5,
+      "training_loss": 0.2108583957498724,
+      "heldout_auc_monitor": 0.9718716049382716
+    },
+    {
+      "epoch": 6,
+      "training_loss": 0.18150396569208666,
+      "heldout_auc_monitor": 0.9779358024691358
+    }
+  ],
+  "elapsed_s": 1.79,
+  "weights_bytes": 142421,
+  "seed": 21,
+  "input_patch": 64,
+  "important_limit": "All positive targets are synthetic insertions; test does NOT validate real target recognition; patch-level AUC may overestimate scene detection quality."
+}

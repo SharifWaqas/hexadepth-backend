@@ -1,0 +1,7 @@
+# Optional: our fine-tuned YOLOv8n detector (--detector yolo). Not needed for the authors' YOLOv4,
+# which runs with OpenCV alone. CPU-only PyTorch is enough:
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+#   pip install -r requirements-yolo.txt
+ultralytics>=8.3
+# ultralytics pulls in opencv-python; keep it on 4.x like the headless build (Darknet importer)
+opencv-python>=4.8,<5

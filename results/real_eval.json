@@ -1,0 +1,824 @@
+{
+  "meta": {
+    "dataset": "MILCO side-scan sonar dataset",
+    "citation": "Santos, N. P., Moura, R., Torgal, G. S., Lobo, V., & Neto, M. D. C. (2024). Side-scan sonar imaging data of underwater vehicles for mine detection. Data in Brief, 53, 110132.",
+    "doi": "https://doi.org/10.1016/j.dib.2024.110132",
+    "data_doi": "https://doi.org/10.6084/m9.figshare.24574879",
+    "split": "d2-test",
+    "split_years": [
+      "2018",
+      "2021"
+    ],
+    "scheme": "d2",
+    "pool_years": [
+      "2010",
+      "2015",
+      "2017"
+    ],
+    "val_fraction": 0.15,
+    "val_seed": 0,
+    "tune_years": [
+      "2010",
+      "2015",
+      "2017"
+    ],
+    "test_years": [
+      "2018",
+      "2021"
+    ],
+    "limit": null,
+    "images": 612,
+    "image_sizes": {
+      "1024x1024": 255,
+      "416x416": 357
+    },
+    "images_with_objects": 139,
+    "images_without_objects": 473,
+    "ground_truth_objects": 191,
+    "ground_truth_by_class": {
+      "MILCO": 145,
+      "NOMBO": 46
+    },
+    "degenerate_ground_truth_boxes": 2,
+    "class_names": {
+      "0": "MILCO",
+      "1": "NOMBO"
+    },
+    "cpu": "Intel(R) Core(TM) i7-8565U CPU @ 1.80GHz",
+    "cpu_threads": 8,
+    "python": "3.14.8",
+    "opencv": "4.14.0",
+    "date": "2026-11-07T20:44:05-06:00",
+    "held_out_set": "No held-out set could be built for the authors' YOLOv4: the dataset does not include the authors' training/validation image lists. All detectors are evaluated on the Batch D2 TEST years (2018 + 2021), which our YOLOv8n and the classical pipeline never saw. Authors' YOLOv4 numbers may include images the model was trained on: the authors did not publish which images they trained and validated on (their notebook builds train.txt / test.txt on Google Drive; the lists are not in the dataset).",
+    "rules": "Same images, same code path for every detector: detector -> 64-byte packet -> decode from the bytes only -> bounding box of the decoded outline vs the labelled box; IoU 0.5 and 0.3; greedy one-to-one matching; every image counted, including images with no objects.",
+    "detector_order": [
+      "authors_yolov4",
+      "yolo",
+      "classical",
+      "oracle"
+    ]
+  },
+  "runs": {
+    "authors_yolov4": {
+      "meta": {
+        "dataset": "MILCO side-scan sonar dataset",
+        "citation": "Santos, N. P., Moura, R., Torgal, G. S., Lobo, V., & Neto, M. D. C. (2024). Side-scan sonar imaging data of underwater vehicles for mine detection. Data in Brief, 53, 110132.",
+        "doi": "https://doi.org/10.1016/j.dib.2024.110132",
+        "data_doi": "https://doi.org/10.6084/m9.figshare.24574879",
+        "split": "d2-test",
+        "detector": "authors_yolov4",
+        "detector_requested": "authors_yolov4",
+        "detector_label": "YOLOv4 trained by Santos et al. (2024)",
+        "detector_fallback_note": null,
+        "detector_credit": "Detector: YOLOv4 trained by Santos et al. (2024), CC BY 4.0 (https://doi.org/10.6084/m9.figshare.24574879)",
+        "detector_settings": {
+          "runtime": "OpenCV 4.14.0 DNN (Darknet importer), CPU",
+          "cfg": "yolov4-custom.txt",
+          "weights": "yolov4-custom_5000.weights",
+          "input_size": [
+            512,
+            512
+          ],
+          "confidence_threshold": 0.25,
+          "nms_iou": 0.45,
+          "threshold_source": "Darknet default detection threshold (0.25); not chosen on test images"
+        },
+        "training_overlap": "may include images the model was trained on: the authors did not publish which images they trained and validated on (their notebook builds train.txt / test.txt on Google Drive; the lists are not in the dataset)",
+        "detector_uses_ground_truth": false,
+        "split_years": [
+          "2018",
+          "2021"
+        ],
+        "scheme": "d2",
+        "pool_years": [
+          "2010",
+          "2015",
+          "2017"
+        ],
+        "val_fraction": 0.15,
+        "val_seed": 0,
+        "tune_years": [
+          "2010",
+          "2015",
+          "2017"
+        ],
+        "test_years": [
+          "2018",
+          "2021"
+        ],
+        "profile": "real",
+        "overrides": {},
+        "vision_params": {
+          "meters_per_pixel": 0.05,
+          "work_width": 1024,
+          "median_ksize": 5,
+          "bilateral_d": 9,
+          "bilateral_sigma": 60.0,
+          "min_contrast": 1.5,
+          "mask_nadir": true,
+          "min_area_frac": 0.0001,
+          "epsilon_frac": 0.02,
+          "max_vertices": 20,
+          "local_bg_ksize": 81,
+          "threshold_ratio": 1.4,
+          "morph_ksize": 3,
+          "max_area_frac": 0.01,
+          "select": "pair",
+          "nadir_gap": 20,
+          "nadir_pad": 12,
+          "min_bg_frac": 0.3,
+          "shadow_ratio": 0.8,
+          "pair_gap": 9,
+          "min_shadow_frac": 0.15
+        },
+        "limit": null,
+        "images": 612,
+        "image_sizes": {
+          "1024x1024": 255,
+          "416x416": 357
+        },
+        "images_with_objects": 139,
+        "images_without_objects": 473,
+        "ground_truth_objects": 191,
+        "ground_truth_by_class": {
+          "MILCO": 145,
+          "NOMBO": 46
+        },
+        "degenerate_ground_truth_boxes": 2,
+        "class_names": {
+          "0": "MILCO",
+          "1": "NOMBO"
+        },
+        "date": "2026-11-07T20:39:30-06:00",
+        "cpu": "Intel(R) Core(TM) i7-8565U CPU @ 1.80GHz",
+        "cpu_threads": 8,
+        "python": "3.14.8",
+        "opencv": "4.14.0",
+        "notes": [
+          "Several detections per image allowed: every box above the confidence threshold becomes its own 64-byte packet. The outline is extracted inside the box and fitted to it.",
+          "Authors' YOLOv4 numbers may include images the model was trained on: the authors did not publish which images they trained and validated on (their notebook builds train.txt / test.txt on Google Drive; the lists are not in the dataset).",
+          "Box IoU: bounding box of the polygon rebuilt from the decoded 64 bytes vs the ground-truth YOLO box. The dataset has no pixel masks.",
+          "Ground-truth boxes with zero width or height are kept and count as misses.",
+          "Pixel positions are decoded with the same nominal metres-per-pixel used to encode; pixel metrics do not depend on its true value.",
+          "Size comparison uses objects matched at IoU >= 0.3; crops are the ground-truth box + 10% padding, encoded as greyscale JPEG (smaller than colour, so the comparison is the least favourable to HexaDepth).",
+          "Speed: detector + pack + unpack per image, single process, excludes file reading.",
+          "Class agreement: share of matched objects whose decoded class (MILCO/NOMBO) equals the label; only for detectors that predict the dataset classes."
+        ]
+      },
+      "detection": {
+        "iou_0.5": {
+          "iou_threshold": 0.5,
+          "true_positives": 175,
+          "predictions": 191,
+          "ground_truth": 191,
+          "precision_pct": 91.6,
+          "recall_pct": 91.6,
+          "false_alarms": 16,
+          "false_alarms_per_image": 0.026,
+          "false_alarms_on_images_without_objects": 1,
+          "false_alarms_on_images_with_objects": 15,
+          "recall_by_class": {
+            "MILCO": {
+              "tp": 132,
+              "gt": 145,
+              "recall_pct": 91.0
+            },
+            "NOMBO": {
+              "tp": 43,
+              "gt": 46,
+              "recall_pct": 93.5
+            }
+          },
+          "class_agreement_of_matches_pct": 100.0,
+          "centre_error_px_median": 1.58,
+          "centre_error_px_p95": 6.28
+        },
+        "iou_0.3": {
+          "iou_threshold": 0.3,
+          "true_positives": 181,
+          "predictions": 191,
+          "ground_truth": 191,
+          "precision_pct": 94.8,
+          "recall_pct": 94.8,
+          "false_alarms": 10,
+          "false_alarms_per_image": 0.016,
+          "false_alarms_on_images_without_objects": 1,
+          "false_alarms_on_images_with_objects": 9,
+          "recall_by_class": {
+            "MILCO": {
+              "tp": 137,
+              "gt": 145,
+              "recall_pct": 94.5
+            },
+            "NOMBO": {
+              "tp": 44,
+              "gt": 46,
+              "recall_pct": 95.7
+            }
+          },
+          "class_agreement_of_matches_pct": 100.0,
+          "centre_error_px_median": 1.8,
+          "centre_error_px_p95": 6.32
+        }
+      },
+      "recall_upper_bound_pct": 100.0,
+      "images_with_detection": 135,
+      "speed": {
+        "per_image_ms_median": 798.68,
+        "per_image_ms_p95": 1059.88,
+        "per_image_ms_mean": 832.91
+      },
+      "packets": {
+        "produced": 191,
+        "pack_errors": 0,
+        "exactly_64_bytes_pct": 100.0,
+        "crc_valid_pct": 100.0
+      },
+      "size": {
+        "matched_objects": 181,
+        "matched_at_iou": 0.3,
+        "packet_bytes": 64,
+        "packet_send_seconds_at_100bps": 5.12,
+        "jpeg_crop_q75": {
+          "median_bytes": 524.0,
+          "hexadepth_reduction_pct": 87.79,
+          "send_seconds_at_100bps": 41.92
+        },
+        "jpeg_crop_q50": {
+          "median_bytes": 451.0,
+          "hexadepth_reduction_pct": 85.81,
+          "send_seconds_at_100bps": 36.08
+        },
+        "full_image_jpg": {
+          "median_bytes": 38323.0,
+          "hexadepth_reduction_pct": 99.83,
+          "send_seconds_at_100bps": 3065.84
+        }
+      }
+    },
+    "yolo": {
+      "meta": {
+        "dataset": "MILCO side-scan sonar dataset",
+        "citation": "Santos, N. P., Moura, R., Torgal, G. S., Lobo, V., & Neto, M. D. C. (2024). Side-scan sonar imaging data of underwater vehicles for mine detection. Data in Brief, 53, 110132.",
+        "doi": "https://doi.org/10.1016/j.dib.2024.110132",
+        "data_doi": "https://doi.org/10.6084/m9.figshare.24574879",
+        "split": "d2-test",
+        "detector": "yolo",
+        "detector_requested": "yolo",
+        "detector_label": "YOLOv8n fine-tuned by HexaDepth (D2 split)",
+        "detector_fallback_note": null,
+        "detector_credit": null,
+        "detector_settings": {
+          "runtime": "Ultralytics 8.4.207, CPU",
+          "weights": "yolo_milco_v8n.pt",
+          "imgsz": 1024,
+          "confidence_threshold": 0.25,
+          "nms_iou": 0.7,
+          "threshold_source": "Ultralytics default predict settings; not chosen on test images"
+        },
+        "training_overlap": "none",
+        "detector_uses_ground_truth": false,
+        "split_years": [
+          "2018",
+          "2021"
+        ],
+        "scheme": "d2",
+        "pool_years": [
+          "2010",
+          "2015",
+          "2017"
+        ],
+        "val_fraction": 0.15,
+        "val_seed": 0,
+        "tune_years": [
+          "2010",
+          "2015",
+          "2017"
+        ],
+        "test_years": [
+          "2018",
+          "2021"
+        ],
+        "profile": "real",
+        "overrides": {},
+        "vision_params": {
+          "meters_per_pixel": 0.05,
+          "work_width": 1024,
+          "median_ksize": 5,
+          "bilateral_d": 9,
+          "bilateral_sigma": 60.0,
+          "min_contrast": 1.5,
+          "mask_nadir": true,
+          "min_area_frac": 0.0001,
+          "epsilon_frac": 0.02,
+          "max_vertices": 20,
+          "local_bg_ksize": 81,
+          "threshold_ratio": 1.4,
+          "morph_ksize": 3,
+          "max_area_frac": 0.01,
+          "select": "pair",
+          "nadir_gap": 20,
+          "nadir_pad": 12,
+          "min_bg_frac": 0.3,
+          "shadow_ratio": 0.8,
+          "pair_gap": 9,
+          "min_shadow_frac": 0.15
+        },
+        "limit": null,
+        "images": 612,
+        "image_sizes": {
+          "1024x1024": 255,
+          "416x416": 357
+        },
+        "images_with_objects": 139,
+        "images_without_objects": 473,
+        "ground_truth_objects": 191,
+        "ground_truth_by_class": {
+          "MILCO": 145,
+          "NOMBO": 46
+        },
+        "degenerate_ground_truth_boxes": 2,
+        "class_names": {
+          "0": "MILCO",
+          "1": "NOMBO"
+        },
+        "date": "2026-11-07T20:42:14-06:00",
+        "cpu": "Intel(R) Core(TM) i7-8565U CPU @ 1.80GHz",
+        "cpu_threads": 8,
+        "python": "3.14.8",
+        "opencv": "4.14.0",
+        "notes": [
+          "Several detections per image allowed: every box above the confidence threshold becomes its own 64-byte packet. The outline is extracted inside the box and fitted to it.",
+          "Box IoU: bounding box of the polygon rebuilt from the decoded 64 bytes vs the ground-truth YOLO box. The dataset has no pixel masks.",
+          "Ground-truth boxes with zero width or height are kept and count as misses.",
+          "Pixel positions are decoded with the same nominal metres-per-pixel used to encode; pixel metrics do not depend on its true value.",
+          "Size comparison uses objects matched at IoU >= 0.3; crops are the ground-truth box + 10% padding, encoded as greyscale JPEG (smaller than colour, so the comparison is the least favourable to HexaDepth).",
+          "Speed: detector + pack + unpack per image, single process, excludes file reading.",
+          "Class agreement: share of matched objects whose decoded class (MILCO/NOMBO) equals the label; only for detectors that predict the dataset classes."
+        ]
+      },
+      "detection": {
+        "iou_0.5": {
+          "iou_threshold": 0.5,
+          "true_positives": 36,
+          "predictions": 123,
+          "ground_truth": 191,
+          "precision_pct": 29.3,
+          "recall_pct": 18.8,
+          "false_alarms": 87,
+          "false_alarms_per_image": 0.142,
+          "false_alarms_on_images_without_objects": 49,
+          "false_alarms_on_images_with_objects": 38,
+          "recall_by_class": {
+            "MILCO": {
+              "tp": 27,
+              "gt": 145,
+              "recall_pct": 18.6
+            },
+            "NOMBO": {
+              "tp": 9,
+              "gt": 46,
+              "recall_pct": 19.6
+            }
+          },
+          "class_agreement_of_matches_pct": 83.3,
+          "centre_error_px_median": 2.24,
+          "centre_error_px_p95": 6.16
+        },
+        "iou_0.3": {
+          "iou_threshold": 0.3,
+          "true_positives": 42,
+          "predictions": 123,
+          "ground_truth": 191,
+          "precision_pct": 34.1,
+          "recall_pct": 22.0,
+          "false_alarms": 81,
+          "false_alarms_per_image": 0.132,
+          "false_alarms_on_images_without_objects": 49,
+          "false_alarms_on_images_with_objects": 32,
+          "recall_by_class": {
+            "MILCO": {
+              "tp": 33,
+              "gt": 145,
+              "recall_pct": 22.8
+            },
+            "NOMBO": {
+              "tp": 9,
+              "gt": 46,
+              "recall_pct": 19.6
+            }
+          },
+          "class_agreement_of_matches_pct": 83.3,
+          "centre_error_px_median": 2.24,
+          "centre_error_px_p95": 9.52
+        }
+      },
+      "recall_upper_bound_pct": 100.0,
+      "images_with_detection": 104,
+      "speed": {
+        "per_image_ms_median": 237.58,
+        "per_image_ms_p95": 348.39,
+        "per_image_ms_mean": 256.66
+      },
+      "packets": {
+        "produced": 123,
+        "pack_errors": 0,
+        "exactly_64_bytes_pct": 100.0,
+        "crc_valid_pct": 100.0
+      },
+      "size": {
+        "matched_objects": 42,
+        "matched_at_iou": 0.3,
+        "packet_bytes": 64,
+        "packet_send_seconds_at_100bps": 5.12,
+        "jpeg_crop_q75": {
+          "median_bytes": 482.5,
+          "hexadepth_reduction_pct": 86.74,
+          "send_seconds_at_100bps": 38.6
+        },
+        "jpeg_crop_q50": {
+          "median_bytes": 430.5,
+          "hexadepth_reduction_pct": 85.13,
+          "send_seconds_at_100bps": 34.44
+        },
+        "full_image_jpg": {
+          "median_bytes": 37138.5,
+          "hexadepth_reduction_pct": 99.83,
+          "send_seconds_at_100bps": 2971.08
+        }
+      }
+    },
+    "classical": {
+      "meta": {
+        "dataset": "MILCO side-scan sonar dataset",
+        "citation": "Santos, N. P., Moura, R., Torgal, G. S., Lobo, V., & Neto, M. D. C. (2024). Side-scan sonar imaging data of underwater vehicles for mine detection. Data in Brief, 53, 110132.",
+        "doi": "https://doi.org/10.1016/j.dib.2024.110132",
+        "data_doi": "https://doi.org/10.6084/m9.figshare.24574879",
+        "split": "d2-test",
+        "detector": "classical",
+        "detector_requested": "classical",
+        "detector_label": "Classical OpenCV pipeline",
+        "detector_fallback_note": null,
+        "detector_credit": null,
+        "detector_settings": {},
+        "training_overlap": "none",
+        "detector_uses_ground_truth": false,
+        "split_years": [
+          "2018",
+          "2021"
+        ],
+        "scheme": "d2",
+        "pool_years": [
+          "2010",
+          "2015",
+          "2017"
+        ],
+        "val_fraction": 0.15,
+        "val_seed": 0,
+        "tune_years": [
+          "2010",
+          "2015",
+          "2017"
+        ],
+        "test_years": [
+          "2018",
+          "2021"
+        ],
+        "profile": "real",
+        "overrides": {},
+        "vision_params": {
+          "meters_per_pixel": 0.05,
+          "work_width": 1024,
+          "median_ksize": 5,
+          "bilateral_d": 9,
+          "bilateral_sigma": 60.0,
+          "min_contrast": 1.5,
+          "mask_nadir": true,
+          "min_area_frac": 0.0001,
+          "epsilon_frac": 0.02,
+          "max_vertices": 20,
+          "local_bg_ksize": 81,
+          "threshold_ratio": 1.4,
+          "morph_ksize": 3,
+          "max_area_frac": 0.01,
+          "select": "pair",
+          "nadir_gap": 20,
+          "nadir_pad": 12,
+          "min_bg_frac": 0.3,
+          "shadow_ratio": 0.8,
+          "pair_gap": 9,
+          "min_shadow_frac": 0.15
+        },
+        "limit": null,
+        "images": 612,
+        "image_sizes": {
+          "1024x1024": 255,
+          "416x416": 357
+        },
+        "images_with_objects": 139,
+        "images_without_objects": 473,
+        "ground_truth_objects": 191,
+        "ground_truth_by_class": {
+          "MILCO": 145,
+          "NOMBO": 46
+        },
+        "degenerate_ground_truth_boxes": 2,
+        "class_names": {
+          "0": "MILCO",
+          "1": "NOMBO"
+        },
+        "date": "2026-11-07T20:44:01-06:00",
+        "cpu": "Intel(R) Core(TM) i7-8565U CPU @ 1.80GHz",
+        "cpu_threads": 8,
+        "python": "3.14.8",
+        "opencv": "4.14.0",
+        "notes": [
+          "One packet per image: the classical detector reports at most one object per image, so recall cannot exceed recall_upper_bound_pct.",
+          "Box IoU: bounding box of the polygon rebuilt from the decoded 64 bytes vs the ground-truth YOLO box. The dataset has no pixel masks.",
+          "Ground-truth boxes with zero width or height are kept and count as misses.",
+          "Pixel positions are decoded with the same nominal metres-per-pixel used to encode; pixel metrics do not depend on its true value.",
+          "Size comparison uses objects matched at IoU >= 0.3; crops are the ground-truth box + 10% padding, encoded as greyscale JPEG (smaller than colour, so the comparison is the least favourable to HexaDepth).",
+          "Speed: detector + pack + unpack per image, single process, excludes file reading.",
+          "Class agreement: share of matched objects whose decoded class (MILCO/NOMBO) equals the label; only for detectors that predict the dataset classes."
+        ]
+      },
+      "detection": {
+        "iou_0.5": {
+          "iou_threshold": 0.5,
+          "true_positives": 1,
+          "predictions": 475,
+          "ground_truth": 191,
+          "precision_pct": 0.2,
+          "recall_pct": 0.5,
+          "false_alarms": 474,
+          "false_alarms_per_image": 0.775,
+          "false_alarms_on_images_without_objects": 364,
+          "false_alarms_on_images_with_objects": 110,
+          "recall_by_class": {
+            "MILCO": {
+              "tp": 0,
+              "gt": 145,
+              "recall_pct": 0.0
+            },
+            "NOMBO": {
+              "tp": 1,
+              "gt": 46,
+              "recall_pct": 2.2
+            }
+          },
+          "class_agreement_of_matches_pct": null,
+          "centre_error_px_median": 4.47,
+          "centre_error_px_p95": 4.47
+        },
+        "iou_0.3": {
+          "iou_threshold": 0.3,
+          "true_positives": 10,
+          "predictions": 475,
+          "ground_truth": 191,
+          "precision_pct": 2.1,
+          "recall_pct": 5.2,
+          "false_alarms": 465,
+          "false_alarms_per_image": 0.76,
+          "false_alarms_on_images_without_objects": 364,
+          "false_alarms_on_images_with_objects": 101,
+          "recall_by_class": {
+            "MILCO": {
+              "tp": 6,
+              "gt": 145,
+              "recall_pct": 4.1
+            },
+            "NOMBO": {
+              "tp": 4,
+              "gt": 46,
+              "recall_pct": 8.7
+            }
+          },
+          "class_agreement_of_matches_pct": null,
+          "centre_error_px_median": 5.98,
+          "centre_error_px_p95": 20.1
+        }
+      },
+      "recall_upper_bound_pct": 72.8,
+      "images_with_detection": 475,
+      "speed": {
+        "per_image_ms_median": 54.9,
+        "per_image_ms_p95": 438.33,
+        "per_image_ms_mean": 168.47
+      },
+      "packets": {
+        "produced": 475,
+        "pack_errors": 0,
+        "exactly_64_bytes_pct": 100.0,
+        "crc_valid_pct": 100.0
+      },
+      "size": {
+        "matched_objects": 10,
+        "matched_at_iou": 0.3,
+        "packet_bytes": 64,
+        "packet_send_seconds_at_100bps": 5.12,
+        "jpeg_crop_q75": {
+          "median_bytes": 642.0,
+          "hexadepth_reduction_pct": 90.03,
+          "send_seconds_at_100bps": 51.36
+        },
+        "jpeg_crop_q50": {
+          "median_bytes": 535.5,
+          "hexadepth_reduction_pct": 88.05,
+          "send_seconds_at_100bps": 42.84
+        },
+        "full_image_jpg": {
+          "median_bytes": 185959.5,
+          "hexadepth_reduction_pct": 99.97,
+          "send_seconds_at_100bps": 14876.76
+        }
+      }
+    },
+    "oracle": {
+      "meta": {
+        "dataset": "MILCO side-scan sonar dataset",
+        "citation": "Santos, N. P., Moura, R., Torgal, G. S., Lobo, V., & Neto, M. D. C. (2024). Side-scan sonar imaging data of underwater vehicles for mine detection. Data in Brief, 53, 110132.",
+        "doi": "https://doi.org/10.1016/j.dib.2024.110132",
+        "data_doi": "https://doi.org/10.6084/m9.figshare.24574879",
+        "split": "d2-test",
+        "detector": "oracle",
+        "detector_requested": "oracle",
+        "detector_label": "Oracle (ground-truth boxes)",
+        "detector_fallback_note": null,
+        "detector_credit": null,
+        "detector_settings": {},
+        "training_overlap": "n/a (ground truth)",
+        "detector_uses_ground_truth": true,
+        "split_years": [
+          "2018",
+          "2021"
+        ],
+        "scheme": "d2",
+        "pool_years": [
+          "2010",
+          "2015",
+          "2017"
+        ],
+        "val_fraction": 0.15,
+        "val_seed": 0,
+        "tune_years": [
+          "2010",
+          "2015",
+          "2017"
+        ],
+        "test_years": [
+          "2018",
+          "2021"
+        ],
+        "profile": "real",
+        "overrides": {},
+        "vision_params": {
+          "meters_per_pixel": 0.05,
+          "work_width": 1024,
+          "median_ksize": 5,
+          "bilateral_d": 9,
+          "bilateral_sigma": 60.0,
+          "min_contrast": 1.5,
+          "mask_nadir": true,
+          "min_area_frac": 0.0001,
+          "epsilon_frac": 0.02,
+          "max_vertices": 20,
+          "local_bg_ksize": 81,
+          "threshold_ratio": 1.4,
+          "morph_ksize": 3,
+          "max_area_frac": 0.01,
+          "select": "pair",
+          "nadir_gap": 20,
+          "nadir_pad": 12,
+          "min_bg_frac": 0.3,
+          "shadow_ratio": 0.8,
+          "pair_gap": 9,
+          "min_shadow_frac": 0.15
+        },
+        "limit": null,
+        "images": 612,
+        "image_sizes": {
+          "1024x1024": 255,
+          "416x416": 357
+        },
+        "images_with_objects": 139,
+        "images_without_objects": 473,
+        "ground_truth_objects": 191,
+        "ground_truth_by_class": {
+          "MILCO": 145,
+          "NOMBO": 46
+        },
+        "degenerate_ground_truth_boxes": 2,
+        "class_names": {
+          "0": "MILCO",
+          "1": "NOMBO"
+        },
+        "date": "2026-11-07T20:44:05-06:00",
+        "cpu": "Intel(R) Core(TM) i7-8565U CPU @ 1.80GHz",
+        "cpu_threads": 8,
+        "python": "3.14.8",
+        "opencv": "4.14.0",
+        "notes": [
+          "ORACLE MODE: ground-truth boxes are used as detections. These numbers measure only what the 64-byte packet preserves (centre, size, outline); they are NOT detection results.",
+          "Box IoU: bounding box of the polygon rebuilt from the decoded 64 bytes vs the ground-truth YOLO box. The dataset has no pixel masks.",
+          "Ground-truth boxes with zero width or height are kept and count as misses.",
+          "Pixel positions are decoded with the same nominal metres-per-pixel used to encode; pixel metrics do not depend on its true value.",
+          "Size comparison uses objects matched at IoU >= 0.3; crops are the ground-truth box + 10% padding, encoded as greyscale JPEG (smaller than colour, so the comparison is the least favourable to HexaDepth).",
+          "Speed: detector + pack + unpack per image, single process, excludes file reading.",
+          "Class agreement: share of matched objects whose decoded class (MILCO/NOMBO) equals the label; only for detectors that predict the dataset classes."
+        ]
+      },
+      "detection": {
+        "iou_0.5": {
+          "iou_threshold": 0.5,
+          "true_positives": 189,
+          "predictions": 191,
+          "ground_truth": 191,
+          "precision_pct": 99.0,
+          "recall_pct": 99.0,
+          "false_alarms": 2,
+          "false_alarms_per_image": 0.003,
+          "false_alarms_on_images_without_objects": 0,
+          "false_alarms_on_images_with_objects": 2,
+          "recall_by_class": {
+            "MILCO": {
+              "tp": 143,
+              "gt": 145,
+              "recall_pct": 98.6
+            },
+            "NOMBO": {
+              "tp": 46,
+              "gt": 46,
+              "recall_pct": 100.0
+            }
+          },
+          "class_agreement_of_matches_pct": null,
+          "centre_error_px_median": 0.71,
+          "centre_error_px_p95": 1.41
+        },
+        "iou_0.3": {
+          "iou_threshold": 0.3,
+          "true_positives": 189,
+          "predictions": 191,
+          "ground_truth": 191,
+          "precision_pct": 99.0,
+          "recall_pct": 99.0,
+          "false_alarms": 2,
+          "false_alarms_per_image": 0.003,
+          "false_alarms_on_images_without_objects": 0,
+          "false_alarms_on_images_with_objects": 2,
+          "recall_by_class": {
+            "MILCO": {
+              "tp": 143,
+              "gt": 145,
+              "recall_pct": 98.6
+            },
+            "NOMBO": {
+              "tp": 46,
+              "gt": 46,
+              "recall_pct": 100.0
+            }
+          },
+          "class_agreement_of_matches_pct": null,
+          "centre_error_px_median": 0.71,
+          "centre_error_px_p95": 1.41
+        }
+      },
+      "recall_upper_bound_pct": 100.0,
+      "images_with_detection": 139,
+      "speed": {
+        "per_image_ms_median": 0.0,
+        "per_image_ms_p95": 0.09,
+        "per_image_ms_mean": 0.02
+      },
+      "packets": {
+        "produced": 191,
+        "pack_errors": 0,
+        "exactly_64_bytes_pct": 100.0,
+        "crc_valid_pct": 100.0
+      },
+      "size": {
+        "matched_objects": 189,
+        "matched_at_iou": 0.3,
+        "packet_bytes": 64,
+        "packet_send_seconds_at_100bps": 5.12,
+        "jpeg_crop_q75": {
+          "median_bytes": 524.0,
+          "hexadepth_reduction_pct": 87.79,
+          "send_seconds_at_100bps": 41.92
+        },
+        "jpeg_crop_q50": {
+          "median_bytes": 451.0,
+          "hexadepth_reduction_pct": 85.81,
+          "send_seconds_at_100bps": 36.08
+        },
+        "full_image_jpg": {
+          "median_bytes": 38444.0,
+          "hexadepth_reduction_pct": 99.83,
+          "send_seconds_at_100bps": 3075.52
+        }
+      }
+    }
+  },
+  "skipped": {},
+  "headline_detector": "authors_yolov4"
+}

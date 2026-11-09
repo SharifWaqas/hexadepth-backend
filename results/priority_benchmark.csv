@@ -1,0 +1,5 @@
+sample,original_bytes,region_metadata_bytes_on_wire,overview_bytes_on_wire,detail_bytes_on_wire,region_time_s,overview_time_s,detail_time_s,full_file_estimate_s,overview_vs_full_time_ratio,overview_psnr_db,detail_psnr_db,trained_model_used
+0001_2021.jpg,35061,64,1984,7552,0.693,7.093,25.653,162.187,22.87,24.67,26.56,False
+0009_2017.jpg,342110,64,1984,15616,0.693,7.093,52.533,1582.347,223.09,19.18,19.49,False
+0307_2010.jpg,312519,64,1920,15296,0.693,6.88,51.467,1445.6,210.12,19.85,20.11,False
+0440_2018.jpg,328136,64,2048,12992,0.693,7.307,43.787,1515.787,207.44,19.6,20.07,False

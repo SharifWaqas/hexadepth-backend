@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f3f7fa">
+  <meta name="description" content="HexaDepth: preview underwater sonar over constrained acoustic data links.">
+  <title>HexaDepth | Acoustic intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="/priority.html" class="identity" aria-label="HexaDepth home">
+        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 36 36" fill="none"><path d="M6 25C10 15 13 12 18 12s8 3 12 13" stroke="currentColor" stroke-width="2.4"/><path d="M11 25c2.2-5.6 4.5-8 7-8s4.8 2.4 7 8" stroke="currentColor" stroke-width="2.4"/><circle cx="18" cy="26" r="2.5" fill="currentColor"/></svg></span>
+        <span>HexaDepth</span>
+      </a>
+      <div class="header-right"><a href="/priority.html" style="color:#0e8490;font-weight:700">Priority-first demo</a><span class="status-indicator"><i aria-hidden="true"></i> Local simulation</span><a href="#about">Technical notes</a></div>
+    </div>
+  </header>
+  <main>
+    <section class="intro container">
+      <div class="intro-copy">
+        <p class="overline">Underwater acoustic intelligence</p>
+        <h1>From sonar to surface.<br><span>Every byte intact.</span></h1>
+        <p class="intro-summary">Losslessly transfer sonar frames in verified 64-byte packets, compare independent acoustic links, and reconstruct the exact source file at the receiver. A separate AI mode can send smaller object descriptions.</p>
+        <div class="intro-meta"><span>Preserve the signal.</span><span class="meta-divider"></span><span>Sonar image → Edge encoding → Surface view</span></div>
+      </div>
+      <div class="feature-art" aria-hidden="true">
+        <div class="feature-graticule"></div><div class="feature-sweep"></div>
+        <svg viewBox="0 0 320 220" class="feature-outline" fill="none"><path d="M90 136L131 91L178 96L212 140L169 168L113 162Z" stroke="#89D5D0" stroke-width="2"/><path d="M131 91L131 162M178 96L169 168M90 136L212 140" stroke="#89D5D0" stroke-opacity=".34"/><circle cx="90" cy="136" r="3" fill="#A9E3DE"/><circle cx="131" cy="91" r="3" fill="#A9E3DE"/><circle cx="178" cy="96" r="3" fill="#A9E3DE"/><circle cx="212" cy="140" r="3" fill="#A9E3DE"/><circle cx="169" cy="168" r="3" fill="#A9E3DE"/><circle cx="113" cy="162" r="3" fill="#A9E3DE"/></svg>
+        <span class="feature-coord">SCAN / SEAFLOOR / 001</span><span class="feature-bits">01001110&nbsp; 10100101</span>
+      </div>
+    </section>
+
+    <section id="workspace" class="workspace container" aria-labelledby="workspaceTitle">
+      <div class="section-heading"><div><p class="overline">Simulation workspace</p><h2 id="workspaceTitle">Encode and transmit a sonar frame</h2></div><p>Choose exact image transfer or a compact interpretation.</p></div>
+
+      <div class="mode-switch" role="group" aria-label="Encoding method">
+        <button type="button" class="mode-option is-selected" data-mode="lossless" aria-pressed="true"><span class="mode-title">Lossless image</span><small>64-byte transport frames</small></button>
+        <button type="button" class="mode-option" data-mode="object64" aria-pressed="false"><span class="mode-title">Object description</span><small>64 bytes · AI-dependent</small></button>
+        <button type="button" class="mode-option" data-mode="visual64" aria-pressed="false"><span class="mode-title">Tiny sketch</span><small>8 bytes · lossy</small></button>
+      </div>
+      <div class="mode-description" id="modeDescription">Exact-byte file transfer. Compress when possible, split into fixed 64-byte packets, reassemble and verify SHA-256. No trained AI needed.</div>
+
+      <div class="control-bar">
+        <label class="input-group input-select"><span>Sonar image</span><select id="sampleSelect" aria-label="Choose a sonar sample"><option value="">Loading samples…</option></select></label>
+        <span class="input-connector">or</span>
+        <label class="upload-control" for="fileInput">Upload an image</label><input id="fileInput" type="file" accept="image/png,image/jpeg,image/bmp,image/tiff" hidden>
+        <span id="uploadName" class="upload-name" aria-live="polite"></span>
+        <button type="button" id="processBtn" class="primary-button"><span id="processText">Send image</span><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10h12m-5-5 5 5-5 5" stroke="currentColor" stroke-width="1.8"/></svg></button>
+      </div>
+
+      <div id="notice" class="notice notice-neutral" role="status" aria-live="polite">Choose an image and send its original bytes through the simulated acoustic link.</div>
+
+      <div class="image-stage">
+        <section class="image-column" aria-labelledby="inputLabel"><div class="pane-header"><div><span class="small-index">Input</span><h3 id="inputLabel">Underwater vehicle</h3></div><span id="inputSize" class="pane-aside">Original frame</span></div>
+          <div class="image-well"><img id="inputImage" alt="Original sonar frame" hidden><div id="inputPlaceholder" class="empty-image">Loading sample image…</div><span class="image-caption">Sonar source</span></div>
+          <p class="pane-note" id="inputNote">Choose a sample or upload your own frame.</p>
+        </section>
+        <div class="flow-divider" aria-hidden="true"><span></span><svg viewBox="0 0 32 32" fill="none"><path d="M4 16h24m-8-7 8 7-8 7" stroke="currentColor" stroke-width="1.6"/></svg><span></span></div>
+        <section class="image-column" aria-labelledby="outputLabel"><div class="pane-header"><div><span class="small-index">Output</span><h3 id="outputLabel">Surface receiver</h3></div><span id="outputSize" class="pane-aside">Bit-exact file</span></div>
+          <div class="image-well output-well"><img id="outputImage" alt="Reconstructed sonar frame" hidden><svg id="objectCanvas" viewBox="0 0 300 200" aria-label="Reconstructed object polygon" role="img" hidden><defs><pattern id="grid" width="25" height="25" patternUnits="userSpaceOnUse"><path d="M25 0H0V25" fill="none" stroke="#274151" stroke-width=".7"/></pattern></defs><rect width="300" height="200" fill="url(#grid)"/><polygon id="polygon" points="" fill="rgba(79,196,180,.13)" stroke="#9AE1D7" stroke-width="2"/></svg><div id="outputPlaceholder" class="empty-image">Your transmitted preview will appear here.</div><span class="image-caption" id="outputCaption">Awaiting transmission</span></div>
+          <p class="pane-note" id="outputNote">Exact pixels appear after all packets pass integrity checks.</p>
+        </section>
+      </div>
+
+      <div class="result-strip" aria-label="Transmission metrics"><div><span>Original file</span><strong id="rawMetric">—</strong></div><div><span>Encoded payload</span><strong id="payloadMetric">—</strong></div><div><span>Compression vs source file</span><strong id="reductionMetric">—</strong></div><div><span>Estimated delivery</span><strong id="deliveryMetric">—</strong></div></div>
+
+      <section class="link-section" aria-labelledby="linkTitle">
+        <div class="link-top"><div><p class="overline">Channel simulation</p><h3 id="linkTitle">Model a constrained acoustic link</h3><p>Choose a published modem reference rate or custom rate. All times are simulated, not field measurements. Multiple receiver channels do not automatically mean independent transmit links.</p></div><div id="integrityBadge" class="integrity neutral">Not transmitted</div></div>
+        <div class="link-controls">
+          <label class="input-group"><span>Bit rate per channel</span><select id="bitrate"><optgroup label="Custom test rates"><option value="100">100 bps</option><option value="300">300 bps</option><option value="2400" selected>2,400 bps</option><option value="9600">9,600 bps</option><option value="20000">20,000 bps</option></optgroup><optgroup label="Published reference rates (simulation)"><option value="1200">Gavia / Benthos MFSK · 1,200 bps</option><option value="3343">WHOI Micromodem best-case · 3,343 bps</option><option value="1622">WHOI multi-receiver aggregate · 1,622 bps</option><option value="13900">EvoLogics 18/34 peak · 13,900 bps</option><option value="15360">Benthos optional PSK peak · 15,360 bps</option></optgroup></select></label>
+          <label class="input-group"><span>Independent channels</span><select id="channels"><option value="1">1 channel</option><option value="2">2 channels</option><option value="4">4 channels</option></select></label>
+          <label class="checkbox-control"><input type="checkbox" id="corrupt"><span>Simulate one bit error</span></label>
+          <button type="button" id="transmitBtn" class="secondary-button" disabled>Transmit again</button>
+        </div>
+        <div id="laneList" class="lane-list"><p class="lane-placeholder">The simulated acoustic channels will appear after you create a preview.</p></div>
+        <div id="linkSummary" class="link-summary">In lossless mode, every 64-byte frame includes 46 bytes of data and 18 bytes of metadata, padding and checksum. Radio-like software parallelism does not create acoustic bandwidth.</div>
+      </section>
+      <details class="technical-detail"><summary>Inspect packet and engineering details <span>Advanced</span></summary><div class="technical-body"><div><h4 id="packetTitle">First transmitted packet</h4><code id="packetHex">—</code><button id="copyBtn" type="button" class="text-button" disabled>Copy packet</button><a id="downloadOutput" class="text-button" download hidden>Download verified file</a></div><div><h4>How to interpret this result</h4><p id="methodNote">Lossless mode transmits the original file bytes; it does not make an AI prediction. Other modes deliberately discard image information.</p><p class="detector-attribution">Detector: YOLOv4 trained by Santos et al. (2024), CC BY 4.0 (optional weights not included).</p></div></div></details>
+    </section>
+    <section class="about container" id="about"><div><p class="overline">Built for constrained links</p><h2>What this prototype demonstrates</h2></div><div class="about-copy"><p><strong>Preserve the data first.</strong> Lossless image mode works for any decodable sonar image, even if the AI detector has never seen its object. PNG/JPEG files may already be compressed, so the transferred file can remain large.</p><p><strong>Transport, not sonar imaging.</strong> Sonar collects the image; a separate compatible acoustic data modem would carry the packets. This prototype simulates 64-byte framing, link airtime, packet CRC and file SHA-256, not an actual underwater transmission.</p><p><strong>Parallel links have a cost.</strong> More links help only when independent acoustic bandwidth, hardware and interference controls are available. Lossless file delivery is not instantaneous; acoustic links are bandwidth-limited.</p><p class="credit">Bundled real sonar samples: Santos et al. (2024), MILCO side-scan dataset, <a href="https://doi.org/10.6084/m9.figshare.24574879" target="_blank" rel="noopener noreferrer">dataset and attribution</a> (<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>). This is a research and hackathon prototype, not a validated underwater communications system.</p></div></section>
+  </main>
+  <footer class="footer"><div class="container"><span>HexaDepth</span><span>Designed for clarity, not visual certainty.</span></div></footer>
+  <script src="/app.js" defer></script>
+</body>
+</html>

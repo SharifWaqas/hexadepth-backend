@@ -1,0 +1,6 @@
+file,source_bytes,codec,compressed_content_bytes,codec_savings_pct,envelope_bytes,packet_count,wire_bytes,wire_vs_source_pct,uncompressed_64b_wire_bytes,benefit_vs_same_framing_pct,local_encode_packetize_ms_median,local_reassemble_decode_ms_median,sha256_ok,corruption_rejected,reverse_order_ok
+0001_2021.jpg,35061,zlib,34814,0.704,34855,758,48512,38.36,48896,0.785,1.49,1.06,True,True,True
+0009_2017.jpg,342110,zlib,341032,0.315,341073,7415,474560,38.72,476096,0.323,15.98,10.52,True,True,True
+0307_2010.jpg,312519,zlib,311520,0.32,311561,6774,433536,38.72,434880,0.309,10.44,6.29,True,True,True
+0440_2018.jpg,328136,zlib,326670,0.447,326711,7103,454592,38.54,456640,0.448,11.0,6.69,True,True,True
+0440_2018_decoded_grayscale.bmp,1049654,zlib,832421,20.696,832462,18097,1158208,10.34,1460480,20.697,32.93,18.23,True,True,True
